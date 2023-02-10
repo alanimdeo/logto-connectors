@@ -30,6 +30,7 @@ import {
 } from './constant.js';
 import type { LineConfig } from './types.js';
 import {
+  authErrorGuard,
   idTokenResponseGuard,
   userInfoResponseGuard,
   authResponseGuard,
@@ -95,7 +96,6 @@ const getUserInfo =
     const { accessToken, idToken } = await getAccessToken(config, { code, redirectUri });
 
     try {
-      // Get { userId, displayName, pictureUrl } using Access token
       const userInfoHttpResponse = await got.get(userInfoEndpoint, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -111,7 +111,6 @@ const getUserInfo =
 
       const { userId, displayName, pictureUrl } = userInfoResult.data;
 
-      // Get email using ID token
       const idTokenHttpResponse = await got.post(verifyIdTokenEndpoint, {
         form: {
           id_token: idToken,
@@ -143,13 +142,18 @@ const authorizationCallbackHandler = async (parameterObject: unknown) => {
   const result = authResponseGuard.safeParse(parameterObject);
 
   if (!result.success) {
+    const error = authErrorGuard.safeParse(parameterObject);
+
+    if (error.success && error.data.error === 'ACCESS_DENIED') {
+      throw new ConnectorError(ConnectorErrorCodes.AuthorizationFailed);
+    }
+
     throw new ConnectorError(ConnectorErrorCodes.General, JSON.stringify(parameterObject));
   }
 
   return result.data;
 };
 
-// From Kakao connector, need to be changed
 const getUserInfoErrorHandler = (error: unknown) => {
   if (error instanceof HTTPError) {
     const { statusCode, body: rawBody } = error.response;

@@ -34,3 +34,9 @@ export const authResponseGuard = z.object({
   code: z.string(),
   redirectUri: z.string(),
 });
+
+export const authErrorGuard = z.object({
+  redirectUri: z.string(),
+  error: z.string(),
+  error_description: z.string(),
+});
