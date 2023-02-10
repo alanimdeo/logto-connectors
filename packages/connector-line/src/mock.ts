@@ -1,4 +1,4 @@
 export const mockedConfig = {
-  channelId: '<channel-id>',
-  channelSecret: '<channel-secret>',
+  clientId: '<client-id>',
+  clientSecret: '<client-secret>',
 };
